@@ -14,7 +14,6 @@ plugins {
     id("de.undercouch.download") version "5.7.0"
 }
 
-// Use the Configuration Cache-safe Provider API to consume it
 val essentialVersion: Provider<String> = providers.gradleProperty("essentialVersion")
 
 tasks.register("checkProperty") {
@@ -166,7 +165,7 @@ val transformEssentialJar = tasks.register<TransformJarTask>("transformEssential
     outputJar.set(layout.buildDirectory.file("transformed-essential/essential-public.jar"))
 }
 
-tasks.jar {
+val j = tasks.jar {
     dependsOn(transformEssentialJar)
     actions = emptyList()
     destinationDirectory.set(layout.buildDirectory.dir("libs"))
@@ -180,6 +179,7 @@ tasks.jar {
 }
 
 artifacts {
+    add("apiElements", transformEssentialJar.flatMap { it.outputJar })
     add("runtimeElements", transformEssentialJar.flatMap { it.outputJar })
     add("archives", transformEssentialJar.flatMap { it.outputJar })
 }
@@ -188,8 +188,8 @@ configurations {
     val default = maybeCreate("default")
     val runtimeElements = maybeCreate("runtimeElements")
     artifacts {
-        add(default.name, transformEssentialJar.flatMap { it.outputJar })
-        add(runtimeElements.name, transformEssentialJar.flatMap { it.outputJar })
+        add(default.name, tasks.jar.flatMap { it.archiveFile })
+        add(runtimeElements.name, tasks.jar.flatMap { it.archiveFile })
     }
 }
 
@@ -198,4 +198,15 @@ tasks.classes { enabled = false }
 
 tasks.build {
     dependsOn(tasks.jar)
+}
+configurations.apiElements.get().outgoing.artifacts.clear()
+configurations.runtimeElements.get().outgoing.artifacts.clear()
+configurations.apiElements.configure {
+    outgoing.artifact(transformEssentialJar.flatMap { it.outputJar })
+}
+configurations.runtimeElements.configure {
+    outgoing.artifact(transformEssentialJar.flatMap { it.outputJar })
+}
+artifacts {
+    add("archives", transformEssentialJar.flatMap { it.outputJar })
 }
