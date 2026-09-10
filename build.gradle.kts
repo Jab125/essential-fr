@@ -184,6 +184,15 @@ artifacts {
     add("archives", transformEssentialJar.flatMap { it.outputJar })
 }
 
+configurations {
+    val default = maybeCreate("default")
+    val runtimeElements = maybeCreate("runtimeElements")
+    artifacts {
+        add(default.name, transformEssentialJar.flatMap { it.outputJar })
+        add(runtimeElements.name, transformEssentialJar.flatMap { it.outputJar })
+    }
+}
+
 tasks.compileJava { enabled = false }
 tasks.classes { enabled = false }
 
